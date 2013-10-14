@@ -1,12 +1,16 @@
 {
-  "name": "application-name",
+  "name": "snapper-images",
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "node app.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "express": "3.4.0",
-    "jade": "*"
+    "jade": "*",
+    "async": "~0.2.9",
+    "node-uuid": "~1.4.1",
+    "nconf": "~0.6.7",
+    "azure": "~0.7.15"
   }
 }
