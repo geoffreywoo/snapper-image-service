@@ -1,6 +1,6 @@
 var azure = require('azure');
 var http = require('http');
-
+/*
 var retryOperations = new azure.ExponentialRetryPolicyFilter();
 var blobService = azure.createBlobService().withFilter(retryOperations);
 
@@ -14,7 +14,7 @@ blobService.createContainerIfNotExists(containerName
         }
     });
 
-
+*/
 http.createServer(function (req, res) {
   res.writeHead(200, {'Content-Type': 'text/plain'});
   res.end('Hello World\n');
