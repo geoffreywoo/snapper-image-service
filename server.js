@@ -14,10 +14,11 @@ var nconf = require('nconf');
 nconf.env().file({ file: 'config.json'});
 var name = nconf.get("AZURE_STORAGE_ACCOUNT")
 var key = nconf.get("AZURE_STORAGE_ACCESS_KEY");
-*/
-
 console.log(name);
 console.log(key);
+
+*/
+
 
 app.use(express.logger());
 app.use(express.bodyParser());
