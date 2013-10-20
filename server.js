@@ -6,9 +6,9 @@ var azure = require('azure');
 var path = require('path');
 var fs = require('fs');
 var gm = require('gm')
-var temp = require("temp");
 
-temp.track();
+//var temp = require("temp");
+//temp.track();
 
 //config stuff for local dev
 //comment out for prod
