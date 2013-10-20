@@ -5,10 +5,13 @@ var port = process.env.PORT || 1337;
 var azure = require('azure');
 var path = require('path');
 var fs = require('fs');
+var gm = require('gm')
+var temp = require("temp");
+
+temp.track();
 
 //config stuff for local dev
 //comment out for prod
-
 /*
 var nconf = require('nconf');
 nconf.env().file({ file: 'config.json'});
@@ -16,19 +19,20 @@ var name = nconf.get("AZURE_STORAGE_ACCOUNT")
 var key = nconf.get("AZURE_STORAGE_ACCESS_KEY");
 console.log(name);
 console.log(key);
-
 */
-
 
 app.use(express.logger());
 app.use(express.bodyParser());
 
 var retryOperations = new azure.ExponentialRetryPolicyFilter();
+
+//dev
 //var blobService = azure.createBlobService(name,key).withFilter(retryOperations);
+
+//prod
 var blobService = azure.createBlobService().withFilter(retryOperations);
 
 containerName = 'test'
-
 
 blobService.createContainerIfNotExists(containerName
     , {publicAccessLevel : 'blob'}
@@ -111,23 +115,123 @@ app.post('/upload', function (req, res) {
 	console.log(req.files.pic.path);
 
   var filename = makeid();
-
-//	fs.readFile(req.files.upload.path, function (err, data) {
-		blobService.createBlockBlobFromFile(containerName
-    		, filename
-    		, req.files.pic.path
-    		, function(err) {
-        		if(!err){
-              console.log('uploaded blob')
-              sendJSONResponse(res, null, filename);
-        		} else {
-        			console.log('upload failed')
-              sendResponse(res, 'upload failed', null);
-        		}
-    		}
-    	);	
-//	});
+	blobService.createBlockBlobFromFile(
+    containerName
+   	, filename
+   	, req.files.pic.path
+  	, function(err) {
+  		if(!err){
+        console.log('uploaded blob')
+        sendJSONResponse(res, null, filename);
+   		} else {
+   			console.log('upload failed')
+        sendResponse(res, 'upload failed', null);
+    	}
+    }
+  );
 });
+
+app.post('/blur', function (req, res) {
+  var filename = makeid();
+
+  var path1 = req.files.pic.path;
+  console.log(path1);
+
+
+// stream code
+/*
+  var tmpStream = temp.createWriteStream();
+  console.log(tmpStream);
+
+  gm(path1)
+  .implode(-5)
+  .stream(function (err, stdout, stderr) {
+    if (err) {
+      console.log(err);
+    } else {
+      stdout.pipe(tmpStream);
+      tmpStream.end();
+      blobService.createBlockBlobFromStream(
+      containerName
+      , filename
+      , tmpStream
+      , tmpStream.length
+      , function(err) {
+          if(!err){
+            console.log('uploaded blob')
+            sendJSONResponse(res, null, filename);
+          //  console.log(temp.cleanup());
+          } else {
+            console.log(err)
+            sendResponse(res, err, null);
+          }
+        }
+      );
+    }
+
+  });
+*/
+
+// temp file code
+/*
+
+  var tmpObj = temp.openSync('hello');
+  console.log(tmpObj);
+
+  gm(path1)
+  .implode(-5)
+  .write(tmpObj, function (err) {
+    if (err) console.log(err);
+  });
+
+  blobService.createBlockBlobFromFile(
+    containerName
+    , filename
+    , tmpObj.path
+    , function(err) {
+      if(!err){
+        console.log('uploaded blob')
+        sendJSONResponse(res, null, filename);
+      //  console.log(temp.cleanup());
+      } else {
+        console.log(err)
+        sendResponse(res, err, null);
+      }
+    }
+  );
+*/
+
+// same file code
+
+
+  gm(path1)
+  .implode(-5)
+  .write(path1, function (err) {
+    if (err) console.log(err);
+    else {
+      blobService.createBlockBlobFromFile(
+        containerName
+      , filename
+      , path1
+      , function(err) {
+          if(!err){
+            console.log('uploaded blob')
+            sendJSONResponse(res, null, filename);
+          } else {
+            console.log(err)
+            sendResponse(res, err, null);
+          }
+        }
+      );
+    }
+  });
+
+
+
+
+
+});
+
 
 app.del('/delete/:name', function (req, res) {
   blobService.deleteBlob(containerName
