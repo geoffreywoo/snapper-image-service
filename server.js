@@ -7,8 +7,8 @@ var path = require('path');
 var fs = require('fs');
 var gm = require('gm')
 
-var temp = require("temp");
-temp.track();
+//var temp = require("temp");
+//temp.track();
 
 //config stuff for local dev
 //comment out for prod
@@ -121,7 +121,7 @@ app.post('/blur', function (req, res) {
   console.log(path1);
 
   gm(path1)
-  .blur(5,5)
+  .blur(75,33)
   .write(path1, function (err) {
     if (err) console.log(err);
     else {
@@ -133,7 +133,6 @@ app.post('/blur', function (req, res) {
           if(!err){
             console.log('uploaded blob')
             sendJSONResponse(res, null, filename);
-            console.log(temp.cleanup());
           } else {
             console.log(err)
             sendResponse(res, err, null);
@@ -143,6 +142,66 @@ app.post('/blur', function (req, res) {
     }
   });
 });
+
+app.post('/abstract', function (req, res) {
+  var filename = makeid();
+
+  var path1 = req.files.pic.path;
+  console.log(path1);
+
+  gm(path1)
+  .blur(75,33)
+  .segment(0.3,1.5)
+  .write(path1, function (err) {
+    if (err) console.log(err);
+    else {
+      blobService.createBlockBlobFromFile(
+        containerName
+        , filename
+        , path1
+        , function(err) {
+          if(!err){
+            console.log('uploaded blob')
+            sendJSONResponse(res, null, filename);
+          } else {
+            console.log(err)
+            sendResponse(res, err, null);
+          }
+        }
+      );
+    }
+  });
+});
+
+app.post('/paint', function (req, res) {
+  var filename = makeid();
+
+  var path1 = req.files.pic.path;
+  console.log(path1);
+
+  gm(path1)
+  .paint(30)
+  .write(path1, function (err) {
+    if (err) console.log(err);
+    else {
+      blobService.createBlockBlobFromFile(
+        containerName
+        , filename
+        , path1
+        , function(err) {
+          if(!err){
+            console.log('uploaded blob')
+            sendJSONResponse(res, null, filename);
+          } else {
+            console.log(err)
+            sendResponse(res, err, null);
+          }
+        }
+      );
+    }
+  });
+});
+
 
 app.del('/delete/:name', function (req, res) {
   blobService.deleteBlob(containerName
