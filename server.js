@@ -137,18 +137,36 @@ app.post('/blur', function (req, res) {
   var path1 = req.files.pic.path;
   console.log(path1);
 
-  // temp file code
-  var tmpObj = temp.openSync('hello');
-  console.log(tmpObj.path);
-
   gm(path1)
   .implode(-5)
   .write(path1, function (err) {
     if (err) console.log(err);
     else {
+      blobService.createBlockBlobFromFile(
+        containerName
+        , filename
+        , path1
+        , function(err) {
+          if(!err){
+            console.log('uploaded blob')
+            sendJSONResponse(res, null, filename);
+            console.log(temp.cleanup());
+          } else {
+            console.log(err)
+            sendResponse(res, err, null);
+          }
+        }
+      );
     }
   });
 });
+
+/*
+
+  // temp file code
+  var tmpObj = temp.openSync('hello');
+  console.log(tmpObj.path);
+*/
   //.write(tmpObj.path, function (err) {
     //if (err) console.log(err);
       /*
