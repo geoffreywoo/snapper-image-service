@@ -78,23 +78,6 @@ app.get('/', function(request, response) {
   sendResponse(response, null, 'snapper images');
 });
 
-/*
-app.post('/text/:name', function(request, response) {
-	var file;
-	blobService.getBlobToFile(containerName
-		, request.params.name
-		, file
-    	, function(error){
-        if(!error){
-            console.log("wrote blob to file");
-            sendResponse(response, null, file)
-        } else {
-        	console.log("error in writing blob to file");
-            sendResponse(response, null, file)
-        }
-    });
-});
-*/
 function makeid()
 {
     var text = "";
@@ -138,7 +121,7 @@ app.post('/blur', function (req, res) {
   console.log(path1);
 
   gm(path1)
-  .implode(-5)
+  .blur(5,5)
   .write(path1, function (err) {
     if (err) console.log(err);
     else {
@@ -160,102 +143,6 @@ app.post('/blur', function (req, res) {
     }
   });
 });
-
-/*
-
-  // temp file code
-  var tmpObj = temp.openSync('hello');
-  console.log(tmpObj.path);
-*/
-  //.write(tmpObj.path, function (err) {
-    //if (err) console.log(err);
-      /*
-      blobService.createBlockBlobFromFile(
-        containerName
-        , filename
-        , tmpObj.path
-        , function(err) {
-          if(!err){
-            console.log('uploaded blob')
-            sendJSONResponse(res, null, filename);
-            console.log(temp.cleanup());
-          } else {
-            console.log(err)
-            sendResponse(res, err, null);
-          }
-        }
-      );
-      */
-//  });
-
-/*
-// same file code
-  gm(path1)
-  .implode(-5)
-  .write(path1, function (err) {
-    if (err) console.log(err);
-    else {
-      sendJSONResponse(res,null,null);
-      blobService.createBlockBlobFromFile(
-        containerName
-      , filename
-      , path1
-      , function(err) {
-          if(!err){
-            console.log('uploaded blob')
-            sendJSONResponse(res, null, filename);
-          } else {
-            console.log(err)
-            sendResponse(res, err, null);
-          }
-        }
-      );
-
-    }
-  });
-*/
-
-
-
-
-// stream code
-/*
-  var tmpStream = temp.createWriteStream();
-  console.log(tmpStream);
-
-  gm(path1)
-  .implode(-5)
-  .stream(function (err, stdout, stderr) {
-    if (err) {
-      console.log(err);
-      return next(err);
-    } else {
-      stdout.pipe(tmpStream);
-
-      blobService.createBlockBlobFromStream(
-      containerName
-      , filename
-      , tmpStream
-      , tmpStream.length
-      , function(err) {
-          if(!err){
-            console.log('uploaded blob')
-            sendJSONResponse(res, null, filename);
-          //  console.log(temp.cleanup());
-          } else {
-            console.log(err)
-            sendResponse(res, err, null);
-          }
-        }
-      );
-
-    }
-
-    tmpStream.end();
-  });
-*/
-
-
 
 app.del('/delete/:name', function (req, res) {
   blobService.deleteBlob(containerName
