@@ -33,8 +33,9 @@ var blobService = azure.createBlobService(name,key).withFilter(retryOperations);
 //prod
 //var blobService = azure.createBlobService().withFilter(retryOperations);
 
-origContainerName = 'original'
-puffedContainerName = 'puffed'
+origContainerName = 'original';
+puffedContainerName = 'puffed';
+imgContainerName = 'img';
 
 blobService.createContainerIfNotExists(origContainerName
     , {publicAccessLevel : 'blob'}
@@ -49,6 +50,14 @@ blobService.createContainerIfNotExists(puffedContainerName
     , function(error){
         if(!error){
             console.log('puffed container up')
+        }
+    });
+
+blobService.createContainerIfNotExists(imgContainerName
+    , {publicAccessLevel : 'blob'}
+    , function(error){
+        if(!error){
+            console.log('img container up')
         }
     });
 
@@ -173,7 +182,7 @@ function generatePuffedPhoto(picPath, nameOfOriginalPicFilename) {
 }
 
 //curl -i -X POST -F "pic=@test1.txt" localhost:5000/upload
-app.post('/upload', function (req, res) {
+app.post('/uploadDouble', function (req, res) {
   //console.log(req);
   console.log(req.files);
 	console.log(req.files.pic);
@@ -201,9 +210,67 @@ app.post('/upload', function (req, res) {
   );
 });
 
-app.put('/swap/:uri'), function (req, res) {
+//curl -i -X POST -F "pic=@test1.txt" localhost:5000/upload
+app.post('/upload', function (req, res) {
+  //console.log(req);
+  console.log(req.files);
+  console.log(req.files.pic);
+  console.log(req.files.pic.path);
 
-}
+  var filename = makeid();
+  
+  //upload normal photo
+  blobService.createBlockBlobFromFile(
+    imgContainerName
+    , filename
+    , req.files.pic.path
+    , function(err) {
+      if(!err){
+        console.log('uploaded blob')
+        sendJSONResponse(res, null, filename);
+
+        generatePuffedPhoto(req.files.pic.path,filename);
+
+      } else {
+        console.log('upload failed')
+        sendResponse(res, 'upload failed', null);
+      }
+    }
+  );
+});
+
+var storageCoreURL = "http://snappermap.blob.core.windows.net/"
+
+app.put('/swap/:uri', function (req, res) {
+  var sourceUri = storageCoreURL + imgContainerName + '/' + req.params.uri;
+  blobService.copyBlob(
+    sourceUri 
+    , origContainerName
+    , req.params.uri
+    , function(err) {
+      if (!err){
+        var sourceUri2 = storageCoreURL + puffedContainerName + '/' + req.params.uri;
+          blobService.copyBlob(
+            sourceUri2 
+            , imgContainerName
+            , req.params.uri
+            , function(err) {
+              if (!err){
+                console.log('puff to img OK');
+                sendJSONResponse(res, null, 'OK');
+              } else {
+                console.log('puff to img fail');
+                sendJSONResponse(res, err, null);
+              }
+            }
+          );
+      } else {
+        console.log('img to orig fail');
+        sendJSONResponse(res, err, null);
+      }
+    }
+  );
+});
 
 app.post('/blur', function (req, res) {
   var filename = makeid();
