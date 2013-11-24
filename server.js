@@ -5,7 +5,8 @@ var port = process.env.PORT || 1337;
 var azure = require('azure');
 var path = require('path');
 var fs = require('fs');
-var gm = require('gm')
+var gm = require('gm');
+var request = require('request');
 
 //var temp = require("temp");
 //temp.track();
@@ -32,15 +33,25 @@ var blobService = azure.createBlobService(name,key).withFilter(retryOperations);
 //prod
 //var blobService = azure.createBlobService().withFilter(retryOperations);
 
-containerName = 'test'
+origContainerName = 'original'
+puffedContainerName = 'puffed'
 
-blobService.createContainerIfNotExists(containerName
+blobService.createContainerIfNotExists(origContainerName
     , {publicAccessLevel : 'blob'}
     , function(error){
         if(!error){
-            console.log('container up')
+            console.log('original container up')
         }
     });
+
+blobService.createContainerIfNotExists(puffedContainerName
+    , {publicAccessLevel : 'blob'}
+    , function(error){
+        if(!error){
+            console.log('puffed container up')
+        }
+    });
+
 
 // only called when its 200
 var sendResponse = function (response, error, data) {
@@ -89,30 +100,110 @@ function makeid()
     return text;
 }
 
+function generateBlurPhoto(picPath, callback) {
+  var newPicPath = picPath + 'blur';
+  gm(picPath)
+  .blur(75,33)
+  .write(newPicPath, function (err) {
+    if (err) {
+      return null;
+      console.log(err);
+    } else {
+      callback(newPicPath);
+    }
+  });
+}
+
+function generateAbstractPhoto(picPath, callback) {
+  var newPicPath = picPath + 'abstract';
+  gm(picPath)
+  .blur(75,33)
+  .segment(0.3,1.5)
+  .write(newPicPath, function (err) {
+    if (err) {
+      return null;
+      console.log(err);
+    } else {
+      callback(newPicPath);
+    }
+  });
+}
+
+function generatePaintPhoto(picPath, callback) {
+  var newPicPath = picPath + 'paint';
+  gm(picPath)
+  .paint(30)
+  .write(newPicPath, function (err) {
+    if (err) {
+      return null;
+      console.log(err);
+    } else {
+      callback(newPicPath);
+    }
+  });
+}
+
+function generatePuffedPhoto(picPath, nameOfOriginalPicFilename) {
+  console.log(picPath);
+  var callback = function(puffedPicPath) {
+    blobService.createBlockBlobFromFile(
+      puffedContainerName
+      , nameOfOriginalPicFilename
+      , puffedPicPath
+      , function(err) {
+        if(!err){
+          console.log('uploaded puffed blob')
+        } else {
+          console.log('upload puffed failed')
+        }
+      }
+    );
+  }
+
+  var puffingStyle = Math.floor((Math.random()*3));
+  console.log(puffingStyle);
+
+  if (puffingStyle == 0) {
+    generateBlurPhoto(picPath, callback);
+  } else if (puffingStyle == 1) {
+    generateAbstractPhoto(picPath, callback);
+  } else {
+    generatePaintPhoto(picPath, callback);
+  }
+}
 
 //curl -i -X POST -F "pic=@test1.txt" localhost:5000/upload
 app.post('/upload', function (req, res) {
-  console.log(req);
+  //console.log(req);
   console.log(req.files);
 	console.log(req.files.pic);
 	console.log(req.files.pic.path);
 
   var filename = makeid();
-	blobService.createBlockBlobFromFile(
-    containerName
-   	, filename
-   	, req.files.pic.path
-  	, function(err) {
-  		if(!err){
+  
+  //upload normal photo
+  blobService.createBlockBlobFromFile(
+    origContainerName
+    , filename
+    , req.files.pic.path
+    , function(err) {
+      if(!err){
         console.log('uploaded blob')
         sendJSONResponse(res, null, filename);
-   		} else {
-   			console.log('upload failed')
+
+        generatePuffedPhoto(req.files.pic.path,filename);
+
+      } else {
+        console.log('upload failed')
         sendResponse(res, 'upload failed', null);
-    	}
+      }
     }
   );
 });
+
+app.put('/swap/:uri'), function (req, res) {
+
+}
 
 app.post('/blur', function (req, res) {
   var filename = makeid();
@@ -201,7 +292,6 @@ app.post('/paint', function (req, res) {
     }
   });
 });
-
 
 app.del('/delete/:name', function (req, res) {
   blobService.deleteBlob(containerName
