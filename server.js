@@ -159,6 +159,7 @@ function generatePuffedPhoto(picPath, nameOfOriginalPicFilename) {
       puffedContainerName
       , nameOfOriginalPicFilename
       , puffedPicPath
+      , {contentType:'image/jpeg'}
       , function(err) {
         if(!err){
           console.log('uploaded puffed blob')
@@ -218,12 +219,12 @@ app.post('/upload', function (req, res) {
   console.log(req.files.pic.path);
 
   var filename = makeid();
-  
   //upload normal photo
   blobService.createBlockBlobFromFile(
     imgContainerName
     , filename
     , req.files.pic.path
+    , {contentType:'image/jpeg'}
     , function(err) {
       if(!err){
         console.log('uploaded blob')
@@ -242,6 +243,10 @@ app.post('/upload', function (req, res) {
 var storageCoreURL = "http://snappermap.blob.core.windows.net/"
 
 app.put('/swap/:uri', function (req, res) {
+
+// TODO: check if swapped already 
+//http://blog.smarx.com/posts/testing-existence-of-a-windows-azure-blob
+
   var sourceUri = storageCoreURL + imgContainerName + '/' + req.params.uri;
   blobService.copyBlob(
     sourceUri 
