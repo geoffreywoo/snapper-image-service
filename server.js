@@ -246,35 +246,48 @@ app.put('/swap/:uri', function (req, res) {
 
 // TODO: check if swapped already 
 //http://blog.smarx.com/posts/testing-existence-of-a-windows-azure-blob
-
-  var sourceUri = storageCoreURL + imgContainerName + '/' + req.params.uri;
-  blobService.copyBlob(
-    sourceUri 
-    , origContainerName
+  blobService.getBlobProperties(
+    origContainerName
     , req.params.uri
-    , function(err) {
-      if (!err){
-        var sourceUri2 = storageCoreURL + puffedContainerName + '/' + req.params.uri;
-          blobService.copyBlob(
-            sourceUri2 
-            , imgContainerName
-            , req.params.uri
-            , function(err) {
-              if (!err){
-                console.log('puff to img OK');
-                sendJSONResponse(res, null, 'OK');
-              } else {
-                console.log('puff to img fail');
-                sendJSONResponse(res, err, null);
-              }
+    , function(err){
+      if(err) {
+        // error... so should be doesn't exist and so go ahead and swap
+        var sourceUri = storageCoreURL + imgContainerName + '/' + req.params.uri;
+        blobService.copyBlob(
+          sourceUri 
+          , origContainerName
+          , req.params.uri
+          , function(err) {
+            if (!err){
+              var sourceUri2 = storageCoreURL + puffedContainerName + '/' + req.params.uri;
+                blobService.copyBlob(
+                  sourceUri2 
+                  , imgContainerName
+                  , req.params.uri
+                  , function(err) {
+                    if (!err){
+                      console.log('puff to img OK');
+                      sendJSONResponse(res, null, 'OK');
+                    } else {
+                      console.log('puff to img fail');
+                      sendJSONResponse(res, err, null);
+                    }
+                  }
+                );
+            } else {
+              console.log('img to orig fail');
+              sendJSONResponse(res, err, null);
             }
-          );
+          }
+        );
       } else {
-        console.log('img to orig fail');
-        sendJSONResponse(res, err, null);
+        // already exists, so no errors in getting property!         
+         console.log('swap already happened');
+         sendJSONResponse(res, err, null);
       }
-    }
-  );
+    });
+
+
 });
 
 app.post('/blur', function (req, res) {
