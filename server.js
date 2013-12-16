@@ -244,7 +244,8 @@ var storageCoreURL = "http://snappermap.blob.core.windows.net/"
 
 app.put('/swap/:uri', function (req, res) {
 
-  if (req.params.uri == null) {
+  if (!req.params.uri) {
+    console.log('URI null');
     sendJSONResponse(res, null, 'OK');
     return;
   } 
