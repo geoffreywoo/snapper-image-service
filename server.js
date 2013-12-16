@@ -244,7 +244,12 @@ var storageCoreURL = "http://snappermap.blob.core.windows.net/"
 
 app.put('/swap/:uri', function (req, res) {
 
-// TODO: check if swapped already 
+  if (req.params.uri == null) {
+    sendJSONResponse(res, null, 'OK');
+    return;
+  } 
+//check if blob exists in 'orig'. if it does, it means that the original image has already been
+// swapped out of img folder to the orig folder. thus, already swapped.
 //http://blog.smarx.com/posts/testing-existence-of-a-windows-azure-blob
   blobService.getBlobProperties(
     origContainerName
@@ -283,7 +288,7 @@ app.put('/swap/:uri', function (req, res) {
       } else {
         // already exists, so no errors in getting property!         
          console.log('swap already happened');
-         sendJSONResponse(res, err, null);
+         sendJSONResponse(res, null, 'OK');
       }
     });
 
