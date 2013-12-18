@@ -33,6 +33,8 @@ var blobService = azure.createBlobService(name,key).withFilter(retryOperations);
 //prod
 //var blobService = azure.createBlobService().withFilter(retryOperations);
 
+
+var storageCoreURL = "http://serriceimages.blob.core.windows.net/"
 origContainerName = 'original';
 puffedContainerName = 'puffed';
 imgContainerName = 'img';
@@ -240,7 +242,6 @@ app.post('/upload', function (req, res) {
   );
 });
 
-var storageCoreURL = "http://snappermap.blob.core.windows.net/"
 
 app.put('/swap/:uri', function (req, res) {
 
@@ -282,6 +283,7 @@ app.put('/swap/:uri', function (req, res) {
                 );
             } else {
               console.log('img to orig fail');
+              console.log(err);
               sendJSONResponse(res, err, null);
             }
           }
